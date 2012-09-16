@@ -2,7 +2,7 @@
 var PACKAGE_JSON, fs, exec, coco, uglify, uglify_parser, path_helper, cp_exec, get_package_json, detect_new_line, coco_make_ugly, coco_make_file, cocofile, replace$ = ''.replace, join$ = [].join;
 PACKAGE_JSON = {
   "name": "ecoco",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Extended COco COmpiler",
   "bugs": {
     "email": "jan.swiecki+ecoco@gmail.com"
@@ -151,5 +151,17 @@ if (process.argv.length < 3) {
   console.log("Not enough arguments");
   return false;
 }
+if (process.argv[2] == '--version') {
+  console.log(PACKAGE_JSON.name + " " + PACKAGE_JSON.version);
+  return false;
+}
+if (process.argv[2] == '--help') {
+  console.log(PACKAGE_JSON.name + " " + PACKAGE_JSON.version);
+  return false;
+}
 cocofile = process.argv.pop();
+if (!fs.existsSync(cocofile)) {
+  console.log("File " + cocofile + " doesn't exist.");
+  return false;
+}
 coco_make_file(cocofile);
