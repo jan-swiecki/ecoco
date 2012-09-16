@@ -1,0 +1,5 @@
+#!bin
+#!bare
+
+if process.argv[2] is '--version'
+	console.log "#{PACKAGE_JSON.name} #{PACKAGE_JSON.version}"

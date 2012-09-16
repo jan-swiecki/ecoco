@@ -1,0 +1,1 @@
+(function(){var e;e=function(){return"uglify!"}}).call(this)

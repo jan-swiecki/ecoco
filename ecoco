@@ -1,0 +1,155 @@
+#!/usr/bin/env node
+var PACKAGE_JSON, fs, exec, coco, uglify, uglify_parser, path_helper, cp_exec, get_package_json, detect_new_line, coco_make_ugly, coco_make_file, cocofile, replace$ = ''.replace, join$ = [].join;
+PACKAGE_JSON = {
+  "name": "ecoco",
+  "version": "0.1.0",
+  "description": "Extended COco COmpiler",
+  "bugs": {
+    "email": "jan.swiecki+ecoco@gmail.com"
+  },
+  "author": {
+    "name": "Jan Święcki",
+    "email": "jan.swiecki@gmail.com",
+    "url": "ministud.io/jan.swiecki"
+  },
+  "files": ["package.json", "ecoco.co", "ecoco"],
+  "bin": {
+    "ecoco": "./ecoco"
+  },
+  "engines": {
+    "node": "0.8.1"
+  },
+  "dependencies": {
+    "coco": ">=0.8.0",
+    "uglify-js": ">=1.3.0"
+  },
+  "preferGlobal": true,
+  "private": true
+};
+fs = require("fs");
+exec = require("child_process").exec;
+coco = require('coco');
+uglify = require('uglify-js').uglify;
+uglify_parser = require('uglify-js').parser;
+path_helper = require('path');
+cp_exec = function(cmd, name, fn){
+  name || (name = 'cmd');
+  exec(cmd, function(err, stdout, stderr){
+    if (err) {
+      console.log(("\x07" + name + ".err: ") + err);
+    }
+    if (stdout) {
+      console.log((name + ".stdout: ") + stdout);
+    }
+    if (stderr) {
+      console.log(("\x07" + name + ".stderr: ") + stderr);
+    }
+    if (fn != null) {
+      return fn.apply(this, arguments);
+    }
+  });
+};
+get_package_json = function(src, json_no_parse){
+  var package_json;
+  if (!fs.existsSync("package.json")) {
+    return false;
+  }
+  package_json = fs.readFileSync("package.json", 'utf8');
+  if (!json_no_parse) {
+    package_json = JSON.parse(package_json);
+  }
+  return package_json;
+};
+detect_new_line = function(src){
+  if (src.indexOf("\r\n") !== -1) {
+    return "\r\n";
+  } else if (src.indexOf("\n") !== -1) {
+    return "\n";
+  } else {
+    throw "Cannot detect new line character";
+  }
+};
+coco_make_ugly = function(code){
+  var ast;
+  ast = uglify_parser.parse(code);
+  ast = uglify.ast_mangle(ast);
+  ast = uglify.ast_squeeze(ast);
+  return uglify.gen_code(ast);
+};
+coco_make_file = function(path_in){
+  var co, nl, options, bUglify, co_include, include_file, prepend_text, precompile_prepend_text, str_options, path_out, package_json, m, js, err, this$ = this;
+  co = fs.readFileSync(path_in, 'utf8');
+  nl = detect_new_line(co);
+  options = {};
+  bUglify = false;
+  co_include = '';
+  include_file = '';
+  prepend_text = '';
+  precompile_prepend_text = '';
+  str_options = [];
+  path_out = cocofile.replace(/\.(?:co|js\.co)$/, '.js');
+  if (package_json = get_package_json(co, true)) {
+    package_json = "PACKAGE_JSON = " + package_json;
+    package_json = package_json.replace(RegExp(nl + '[\\t]*{', 'g'), '{');
+    package_json = package_json.replace(RegExp(nl + '[\\t]*\\[', 'g'), '[');
+    precompile_prepend_text = package_json;
+  }
+  if (m = co.match(/^\#!(.*)$/gm)) {
+    m.forEach(function(cmd){
+      var m, include_path;
+      cmd = replace$.call(cmd, /^#!/, '');
+      if (m = cmd.match(/^include=(.*)$/)) {
+        include_file = m[1];
+        include_path = replace$.call(path_in, RegExp(path_helper.basename(path_in) + ''), '') + (replace$.call(include_file, /\.co$/, '') + '.co');
+        co_include = fs.readFileSync(include_path, 'utf8');
+        return true;
+      }
+      if (['b', 'bare'].indexOf(cmd) !== -1) {
+        options.bare = true;
+        return true;
+      }
+      if (['u', 'ugly', 'uglify', 'compress'].indexOf(cmd) !== -1) {
+        bUglify = true;
+        return true;
+      }
+      if (['bin', 'binary'].indexOf(cmd) !== -1) {
+        prepend_text += "#!/usr/bin/env node\n";
+        str_options.push("node binary");
+        path_out = replace$.call(path_out, /\.js$/, '');
+        return true;
+      }
+    });
+  }
+  co = co_include + precompile_prepend_text + co;
+  try {
+    js = coco.compile(co, options);
+    if (options.bare) {
+      str_options.push('bare');
+    }
+    if (bUglify) {
+      js = coco_make_ugly(js);
+      str_options.push('uglify');
+    }
+    if (include_file) {
+      str_options.push("include=" + include_file);
+    }
+    str_options = join$.call(str_options, ', ');
+    if (str_options) {
+      str_options = " (" + str_options + ")";
+    }
+    console.log(path_out + ": done" + str_options);
+    js = prepend_text + js;
+    fs.writeFileSync(path_out, js, 'utf8');
+    return true;
+  } catch (e$) {
+    err = e$;
+    console.log("\x07");
+    return console.log(path_out + ".error", err);
+  }
+};
+if (process.argv.length < 3) {
+  console.log("Not enough arguments");
+  return false;
+}
+cocofile = process.argv.pop();
+coco_make_file(cocofile);

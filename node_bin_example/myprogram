@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+var PACKAGE_JSON;
+PACKAGE_JSON = {
+  "name": "myprogram",
+  "version": "0.1.1",
+  "author": "Name",
+  "files": ["package.json", "myprogram.co", "myprogram"],
+  "bin": {
+    "myprogram": "./myprogram"
+  },
+  "preferGlobal": true,
+  "private": true
+};
+if (process.argv[2] === '--version') {
+  console.log(PACKAGE_JSON.name + " " + PACKAGE_JSON.version);
+}

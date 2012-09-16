@@ -1,0 +1,17 @@
+{
+	"name": "myprogram",
+	"version": "0.1.1",
+	"author": "Name",
+	"files":
+	[
+		"package.json",
+		"myprogram.co",
+		"myprogram"
+	],
+	"bin":
+	{
+		"myprogram": "./myprogram"
+	},
+	"preferGlobal": true,
+	"private": true
+}
