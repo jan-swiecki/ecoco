@@ -1,16 +1,24 @@
 {
 	"name": "ecoco",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Extended COco COmpiler",
 	"bugs":
 	{
+		"url": "https://github.com/jan-swiecki/ecoco/issues",
 		"email": "jan.swiecki+ecoco@gmail.com"
 	},
+	"homepage": "https://github.com/jan-swiecki/ecoco",
+	"keywords": ["coco", "ecoco", "extended coco compiler"],
 	"author":
 	{
 		"name": "Jan Święcki",
 		"email": "jan.swiecki@gmail.com",
 		"url": "ministud.io/jan.swiecki"
+	},
+	"repository":
+	{
+		"type": "git",
+		"url": "https://github.com/jan-swiecki/ecoco.git"
 	},
 	"files":
 	[
