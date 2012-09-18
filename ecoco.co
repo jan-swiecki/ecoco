@@ -44,16 +44,16 @@ coco_make_ugly = (code)->
 	uglify.gen_code ast
 
 coco_make_file = (path_in)->
-	co					 = fs.readFileSync path_in, \utf8
+	co           = fs.readFileSync path_in, \utf8
 	nl           = detect_new_line co
-	options			 = {}
-	bUglify			 = false
-	co_include	 = ''
+	options      = {}
+	bUglify      = false
+	co_include   = ''
 	include_file = ''
 
-	prepend_text = ''
+	prepend_text            = ''
 	precompile_prepend_text = ''
-	str_options = []
+	str_options             = []
 	
 	# make path_out
 	path_out = cocofile.replace /\.(?:co|js\.co)$/, '.js'
