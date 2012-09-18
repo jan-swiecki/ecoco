@@ -2,15 +2,22 @@
 var PACKAGE_JSON, fs, exec, coco, uglify, uglify_parser, path_helper, cp_exec, get_package_json, detect_new_line, coco_make_ugly, coco_make_file, cocofile, replace$ = ''.replace, join$ = [].join;
 PACKAGE_JSON = {
   "name": "ecoco",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Extended COco COmpiler",
   "bugs": {
+    "url": "https://github.com/jan-swiecki/ecoco/issues",
     "email": "jan.swiecki+ecoco@gmail.com"
   },
+  "homepage": "https://github.com/jan-swiecki/ecoco",
+  "keywords": ["coco", "ecoco", "extended coco compiler"],
   "author": {
     "name": "Jan Święcki",
     "email": "jan.swiecki@gmail.com",
     "url": "ministud.io/jan.swiecki"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jan-swiecki/ecoco.git"
   },
   "files": ["package.json", "ecoco.co", "ecoco"],
   "bin": {
@@ -23,8 +30,7 @@ PACKAGE_JSON = {
     "coco": ">=0.8.0",
     "uglify-js": ">=1.3.0"
   },
-  "preferGlobal": true,
-  "private": true
+  "preferGlobal": true
 };
 fs = require("fs");
 exec = require("child_process").exec;
@@ -49,12 +55,14 @@ cp_exec = function(cmd, name, fn){
     }
   });
 };
-get_package_json = function(src, json_no_parse){
-  var package_json;
-  if (!fs.existsSync("package.json")) {
+get_package_json = function(path_in, src, json_no_parse){
+  var folder, path, package_json;
+  folder = path_helper.dirname(path_in);
+  path = folder + "/package.json";
+  if (!fs.existsSync(path)) {
     return false;
   }
-  package_json = fs.readFileSync("package.json", 'utf8');
+  package_json = fs.readFileSync(path, 'utf8');
   if (!json_no_parse) {
     package_json = JSON.parse(package_json);
   }
@@ -88,7 +96,7 @@ coco_make_file = function(path_in){
   precompile_prepend_text = '';
   str_options = [];
   path_out = cocofile.replace(/\.(?:co|js\.co)$/, '.js');
-  if (package_json = get_package_json(co, true)) {
+  if (package_json = get_package_json(path_in, co, true)) {
     package_json = "PACKAGE_JSON = " + package_json;
     package_json = package_json.replace(RegExp(nl + '[\\t]*{', 'g'), '{');
     package_json = package_json.replace(RegExp(nl + '[\\t]*\\[', 'g'), '[');

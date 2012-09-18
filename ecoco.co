@@ -16,12 +16,14 @@ cp_exec = !(cmd,name || 'cmd',fn)->
 		if fn?
 			fn ...
 
-get_package_json = (src,json_no_parse)->
+get_package_json = (path_in,src,json_no_parse)->
 	# if m=src.match /\"package.json\"/
-	if not fs.existsSync "package.json"
+	folder = path_helper.dirname path_in
+	path   = "#folder/package.json"
+	if not fs.existsSync path
 		return false
 
-	package_json = fs.readFileSync "package.json", \utf8
+	package_json = fs.readFileSync path, \utf8
 	if not json_no_parse
 		package_json = JSON.parse package_json
 
@@ -59,7 +61,7 @@ coco_make_file = (path_in)->
 	# check if package.json exists
 	# if it does add "package.json" variable
 	# at the beginning of the program
-	if (package_json = get_package_json(co,true))
+	if (package_json = get_package_json(path_in,co,true))
 		package_json = "PACKAGE_JSON = #package_json"
 		package_json = package_json.replace //#nl[\t ]*{//g, '{'
 		package_json = package_json.replace //#nl[\t ]*\[//g, '['
