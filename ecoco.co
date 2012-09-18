@@ -1,9 +1,9 @@
 #!bin
 #!bare
-fs						= require "fs"
-exec					= require "child_process" .exec
-coco					= require 'coco'
-uglify				= require 'uglify-js' .uglify
+fs            = require "fs"
+exec          = require "child_process" .exec
+coco          = require 'coco'
+uglify        = require 'uglify-js' .uglify
 uglify_parser = require 'uglify-js' .parser
 path_helper   = require 'path'
 
