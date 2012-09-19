@@ -2,32 +2,50 @@
 
 # Ecoco (Extended COco COmpiler)
 
-`ecoco` extends `coco` compiling features. `ecoco example.co` compiles to `example.js`.
+`ecoco` extends `coco` compiling features.
+
+# CLI
+
+	Usage: ecoco [options] [file] [ -- arguments ]
+	
+	Options:
+	  --version, --info         Display current version                    [boolean]
+	  --usage, --help           Display help                               [boolean]
+	  --compile, -c             Equivalent to `coco -c`                    [boolean]
+	  --bare, -b                Equivalent to `coco -b`                    [boolean]
+	  --uglify, -u, --compress  Compress output (uses `uglify-js`)         [boolean]
+	  --binary                  Output filename without `.js` and adds
+	                            `#!/usr/bin/env node` at the beginning of output
+	                            file.                                      [boolean]
+	  --include FILE            If FILE has `co` extension then AT COMPILE TIME
+	                            prepend FILE to source file. Otherwise if FILE has
+	                            `js` extension then AFTER compiling prepend FILE to
+	                            compiled file.                                      
+	  --make-readme FILE        Replace `{CLI}` in `README.md.src` with command
+	                            line usage (which is generated from `CLI.yaml`
+	                            file) and save it to `README.md`.                   
+	Examples:
+	  ecoco -cbu awesome.co
+	  ecoco --make-readme
+	  ecoco -cbu --make-readme awesome.co
+	  
+	  ecoco binary.co -- --what
+	  (coco binary.co --what)
+	  
+	  ecoco binary.co -- arguments
+	  (coco binary.co arguments)
+	
 
 # Headers
 
-* `#!b` or `#!bare`
+Adding these at the beggining of your source file will change Ecoco behaviour accordingly:
 
- Removes `(function(){ ... }).call(this);` around your program (equivalent to `coco -b`)
-
-* `#!u` or `#!ugly` or `#!uglify`
-
- Executes `uglify-js` on JavaScript output (i.e. compresses JavaScript)
-
-* `#!bin`
- Compiles `example.co` into `example` (not `example.js`) and adds `#!/usr/bin/env node` at the beginning of the `example` file.
-
-* `#!include=filename` or `#!include=filename.co`
- Just before compiling `ecoco` will prepend your source file with `filename.co` contents.
-
-# Additional features
-
-* `package.json`
-
- If `package.json` file is found in the directory of `example.co` then `ecoco` will add into its output a global `PACKAGE_JSON` object which will contain `package.json` data. Useful if you want to add `example --version` functionality (you just need to get `PACKAGE_JSON.version` inside your program).
-
+* `#!b` or `#!bare` like `ecoco -b`
+* `#!u` or `#!ugly` or `#!uglify` like `ecoco -u`
+* `#!binary` like `ecoco --binary`
+* `#!include=filename` or `#!include=filename.co` like `ecoco --include`
+ 
 # Examples
-
 
 	fn = -> "ok!"
 
