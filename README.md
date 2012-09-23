@@ -6,7 +6,7 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 
 ### CLI
 
-	ecoco 0.2.3-3-beta
+	ecoco 0.2.3-4-beta
 	
 	Usage:
 		ecoco [options] file [arguments]
@@ -180,4 +180,6 @@ or if you want to build
 
 * **0.2.3-beta**
 
- Added `ecoco.json` support.
+ * Added `ecoco.json` support.
+ * Ecoco will add top comment section into output `.js` file with some info.
+ 
