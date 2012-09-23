@@ -65,6 +65,7 @@ Adding these at the beggining of your source file will change Ecoco behaviour ac
 * `#!u` or `#!ugly` or `#!uglify` like `ecoco -u`
 * `#!binary` like `ecoco --binary`
 * `#!include=filename` or `#!include=filename.co` like `ecoco --include`
+* `#!replace pattern, replacement` (coco style regexp replace function)
  
 ### Ecoco.json
 
