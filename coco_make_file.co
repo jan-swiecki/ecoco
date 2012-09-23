@@ -1,0 +1,256 @@
+fs            = require "fs"
+exec          = require "child_process" .exec
+coco          = require 'coco'
+uglify        = require 'uglify-js' .uglify
+uglify_parser = require 'uglify-js' .parser
+path_helper   = require 'path'
+
+require 'colors'
+require 'js-yaml'
+
+
+
+export
+	co_include: []
+	js_include: []
+	co: ''
+	nl: undefined
+	prepend_before_compile: ''
+	prepend_after_compile: ''
+	path_out: ''
+
+	cp_exec: !(cmd,fn)->
+		exec cmd, (err,stdout,stderr)->
+			if err
+				@error "CMD: #cmd"
+				@error (err.toString!)
+				return
+
+			if fn?
+				fn ...
+
+	error: ->
+		if not @settings.no_beep
+			console.error "\007"
+
+		if @settings.no_colors
+			console.error.apply(,arguments)
+		else
+			console.error.apply(,Array.prototype.slice.call(arguments).map(~> it.bold.red))
+	ok: ->
+		if @settings.no_colors
+			console.log.apply(,arguments)
+		else
+			console.log.apply(,Array.prototype.slice.call(arguments).map(~> it.bold.green))
+
+	get_includes: (type || 'co')->
+		arr = this["#{type}_include"]
+
+		code = ''
+
+		for k in arr
+			path = arr[k]
+
+			if not fs.existsSync path
+				throw "file #path doesnt exists"
+
+			code += (fs.readFileSync path, \utf8) + @nl
+
+		return code
+
+	get_package_json: (path,json_no_parse)->
+		folder = path_helper.dirname path
+		path   = "#folder/package.json"
+		if not fs.existsSync path
+			return false
+
+		package_json = fs.readFileSync path, \utf8
+		if not json_no_parse
+			package_json = JSON.parse package_json
+
+		package_json
+
+	detect_new_line: (src)->
+		if src.indexOf("\r\n") !== -1
+			return "\r\n"
+		else if src.indexOf("\n") !== -1
+			return "\n"
+		else
+			return "\n"
+
+	coco_make_ugly: (code)->
+		ast = uglify_parser.parse code
+		ast = uglify.ast_mangle ast
+		ast = uglify.ast_squeeze ast
+		uglify.gen_code ast
+
+	make_binary: ->
+		@prepend_after_compile = "#!/usr/bin/env node#{@nl}"
+		@path_out -= /\.js$/
+
+	replace: (repl)->
+		script = "(x) -> x.replace #repl"
+		script = coco.compile script, {bare:true}
+
+		@co := (eval script)(@co)
+
+	include_file: (path)->
+		if path.match /\.co$/
+			@co_include.push path
+		else if path.match /\.js$/
+			@js_include.push path
+
+	get_str_options: (settings)->
+		str_options = []
+		for k in settings
+			if settings[k] === true then str_options.push k
+
+		if str_options.length
+			" ("+str_options*', '+")"
+		else
+			""
+
+	make_readme: (program_name,readme_path || 'README.md')->
+		
+		if typeof readme_path == 'boolean' then readme_path = 'README.md'
+		if not readme_path.match /^README\.(md|markdown)/i
+			return false
+
+		# check if README.md.src exists
+		dir = path_helper.dirname(readme_path)
+		readme_src_filename = 'README.md.src'
+		readme_src_path = "#dir/#readme_src_filename"
+
+		if not fs.existsSync readme_src_path
+			@error "No README.md.src"
+			return
+
+		# check if `program name`.js (or .co) exists
+		program_filename = "#program_name"
+		# cmd = "node \"#program_filename\" --usage"
+		cmd = ['node', "#program_filename", "--usage"]
+		if not fs.existsSync program_filename
+			program_filename = "#program_name.co"
+			cmd = ['coco', "#program_filename", "--usage"]
+
+			if not fs.existsSync program_filename
+				program_filename = "#program_name.js"
+				cmd = ['node', "#program_filename", "--usage"]
+
+				if not fs.existsSync program_filename
+					@error "Cannot find #program_name"
+					return
+
+
+		# get readme content
+		readme = fs.readFileSync readme_src_path .toString!
+
+		# get --usage
+		@cp_exec cmd*' ', (err,stdout,stderr)->
+			cli_usage  = (stdout+stderr) .replace /^/gm, "\t"
+			readme     := readme .replace /\{CLI\}/, cli_usage
+
+			write_path = (readme_path - /\.src$/)
+			@ok "Writing to #write_path"
+			fs.writeFileSync write_path, readme
+
+		return
+
+	make: (path,settings)->
+		if typeof path is 'object' then settings := path; path := settings._path
+
+		@settings = settings
+
+		if typeof settings['make-readme'] !== 'undefined'
+			@make_readme path,settings['make-readme']
+			return
+
+		if not path
+			return false
+
+		if not fs.existsSync path
+			@error "File #path doesn't exist."
+			return false
+
+		@co = fs.readFileSync path, \utf8
+		@nl = @detect_new_line @co
+
+		# make path_out
+		@path_out = path.replace /\.(?:co|js\.co)$/, '.js'
+
+		# parse shebang #! in file
+		if m=@co.match /^\#!(.*)$/gm
+			(cmd)<~ m.forEach
+			cmd -= /^#!/
+			if m=cmd.match /^include=(.*)$/
+				@include_file m[1]
+				return true
+
+			if m=cmd.match /^replace (.*)$/
+				@replace m[1]
+				return true
+
+			# no (function(){ ... }).call(this); around program
+			if <[b bare]>.indexOf(cmd) !== -1
+				settings.bare = true
+				return true
+
+			# uglify (compress)
+			if <[u ugly uglify compress]>.indexOf(cmd) !== -1
+				settings.uglify = true
+				return true
+
+			# compile
+			if <[c compile]>.indexOf(cmd) !== -1
+				settings.compile = true
+				return true
+
+			# add #!/usr/bin/env node
+			# remove .js from filename
+			if <[bin binary]>.indexOf(cmd) !== -1
+				settings.binary = true
+				return true
+
+		try
+			co_includes = @get_includes \co
+			@co         = @prepend_before_compile+co_includes+@co
+
+			js          = coco.compile @co, {bare:settings.bare}
+
+			js_includes = @get_includes \js
+			js          = js_includes+js
+
+			if settings.uglify
+				js = @coco_make_ugly js
+			if settings.binary
+				@make_binary!
+
+			js = @prepend_after_compile+js
+
+			str_options = @get_str_options settings
+
+			# compile
+			if settings.compile
+				@ok "#{@path_out}: done#str_options"
+				fs.writeFileSync @path_out, js, \utf8
+
+			# execute
+			else
+				@path_out = @path_out - /\.js/ + '.tmp'
+				fs.writeFileSync @path_out, js, \utf8
+				
+				cp = require 'child_process'
+				proc = cp.spawn 'node', [@path_out].concat(settings.exec_argv)
+
+				proc.stdout.on 'data', (data)->
+					process.stdout.write data
+
+				proc.stderr.on 'data', (data)->
+					process.stderr.write data
+
+				proc.on 'exit', (exit_code)~>
+					fs.unlinkSync @path_out
+
+			return true
+		catch err
+			@error "#{@path_out}.error",err

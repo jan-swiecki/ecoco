@@ -1,0 +1,40 @@
+filename: ecoco
+options:
+  compile:
+    alias: c
+    description: Equivalent to `coco -c`
+    boolean: true
+  bare:
+    alias: b
+    description: Equivalent to `coco -b`
+    boolean: true
+  uglify:
+    alias:
+      - u
+      - compress
+    description: Compress output (uses `uglify-js`)
+    boolean: true
+  binary:
+    description: Output filename without `.js` and adds `#!/usr/bin/env node` at the beginning of output file.
+    boolean: true
+  include FILE:
+    description:
+      If FILE has `co` extension then AT COMPILE TIME prepend FILE to source file.
+      Otherwise if FILE has `js` extension then AFTER compiling prepend FILE to compiled file.
+  make-readme FILE:
+    description:
+      Replace `{CLI}` in `README.md.src` with `name --usage` and save it to `README.md`.
+  no-colors:
+    description: Disable color output
+    boolean: true
+  no-beep:
+    description: Disable error beep
+    boolean: true
+examples:
+  -cbu awesome.co: compiles to awesome.js with `bare` and `uglify`
+  --make-readme: compiles README.md.src into README.md
+  binary.co --what: executes binary.co with `--what` argument
+display_settings:
+  options:
+    hmargin: 2
+    description: "Usage:\n\tecoco [options] file [arguments]\n\tecoco file -c [options]\n\n\ti.e. if you want to execute (not compile)\n\t     then put arguments after file."
