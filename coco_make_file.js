@@ -16,18 +16,6 @@
   ref$.prepend_before_compile = '';
   ref$.prepend_after_compile = '';
   ref$.path_out = '';
-  ref$.cp_exec = function(cmd, fn){
-    exec(cmd, function(err, stdout, stderr){
-      if (err) {
-        this.error("CMD: " + cmd);
-        this.error(err.toString());
-        return;
-      }
-      if (fn != null) {
-        return fn.apply(this, arguments);
-      }
-    });
-  };
   ref$.error = function(){
     var this$ = this;
     if (!this.settings.no_beep) {
@@ -50,6 +38,19 @@
         return it.bold.green;
       }));
     }
+  };
+  ref$.cp_exec = function(cmd, fn){
+    var this$ = this;
+    exec(cmd, function(err, stdout, stderr){
+      if (err) {
+        this$.error("CMD: " + cmd);
+        this$.error(err.toString());
+        return;
+      }
+      if (fn != null) {
+        return fn.apply(this$, arguments);
+      }
+    });
   };
   ref$.get_includes = function(type){
     var arr, code, k, path;

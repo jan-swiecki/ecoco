@@ -19,16 +19,6 @@ export
 	prepend_after_compile: ''
 	path_out: ''
 
-	cp_exec: !(cmd,fn)->
-		exec cmd, (err,stdout,stderr)->
-			if err
-				@error "CMD: #cmd"
-				@error (err.toString!)
-				return
-
-			if fn?
-				fn ...
-
 	error: ->
 		if not @settings.no_beep
 			console.error "\007"
@@ -42,6 +32,16 @@ export
 			console.log.apply(,arguments)
 		else
 			console.log.apply(,Array.prototype.slice.call(arguments).map(~> it.bold.green))
+
+	cp_exec: !(cmd,fn)->
+		exec cmd, (err,stdout,stderr)~>
+			if err
+				@error "CMD: #cmd"
+				@error (err.toString!)
+				return
+
+			if fn?
+				fn ...
 
 	get_includes: (type || 'co')->
 		arr = this["#{type}_include"]

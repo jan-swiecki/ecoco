@@ -6,9 +6,14 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 
 ### CLI
 
+	ecoco 0.2.2-1-beta
+	
 	Usage:
-		ecoco file [options]
-		ecoco   -c [options] file [arguments]
+		ecoco [options] file [arguments]
+		ecoco file -c [options]
+	
+		i.e. if you want to execute (not compile)
+		     then put arguments after file.
 	
 	Options:
 	
@@ -35,8 +40,12 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 	                             `js` extension then AFTER compiling prepend FILE
 	                             to compiled file.
 	
-	  --make-readme FILE         Replace `{CLI}` in `README.md.src` with `name
+	  --make-readme FILE         Replace `{CLI}` in `README.md.src` with `file
 	                             --usage` and save it to `README.md`.
+	
+	  --no-colors                Disable color output
+	
+	  --no-beep                  Disable error beep
 	
 	
 	
@@ -46,7 +55,7 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 	  ecoco --make-readme      compiles README.md.src into README.md
 	  ecoco binary.co --what   executes binary.co with `--what` argument
 	
-	
+		
 
 ### Headers
 

@@ -23,7 +23,7 @@ options:
       Otherwise if FILE has `js` extension then AFTER compiling prepend FILE to compiled file.
   make-readme FILE:
     description:
-      Replace `{CLI}` in `README.md.src` with `name --usage` and save it to `README.md`.
+      Replace `{CLI}` in `README.md.src` with `file --usage` and save it to `README.md`.
   no-colors:
     description: Disable color output
     boolean: true
