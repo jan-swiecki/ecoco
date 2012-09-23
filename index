@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 var easy_cli, argv, exec_argv, raw_argv, cut_after, coco_make_file;
-easy_cli = require('../easy-cli');
+easy_cli = require('easy-cli');
 argv = easy_cli().argv;
 exec_argv = [];
 if (!argv.compile && argv._.length) {

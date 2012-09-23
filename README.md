@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## Ecoco (Extended COco COmpiler) v0.2.2-beta
 
 It is assumed that you are familiar with [coco language](https://github.com/satyr/coco/)!
@@ -141,6 +140,3 @@ or
 or if you want to build
 
 `git clone https://github.com/jan-swiecki/ecoco && cd ecoco && npm install && coco index.co index.co && npm link`
-=======
-# Ecoco (Extended COco COmpiler)
->>>>>>> 9aa07a2ff26ed07bbc6f1066ce8948ff7e78d6c5
