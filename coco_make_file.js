@@ -1,5 +1,16 @@
+// Compiled with Extended COco COmpiler
+// Which is a wrapper for native Coco compiler
+// 
+// Coco  repository: https://github.com/satyr/coco/
+//                   Hard work of Satoshi Murakami
+// 
+// Ecoco repository: https://github.com/jan-swiecki/ecoco
+//                   by Jan Święcki
+// 
+// Ecoco headers:
+
 (function(){
-  var fs, exec, coco, uglify, uglify_parser, path_helper, ref$, out$ = typeof exports != 'undefined' && exports || this, replace$ = ''.replace, join$ = [].join;
+  var fs, exec, coco, uglify, uglify_parser, path_helper, js_header, ref$, out$ = typeof exports != 'undefined' && exports || this, replace$ = ''.replace, join$ = [].join, split$ = ''.split;
   fs = require("fs");
   exec = require("child_process").exec;
   coco = require('coco');
@@ -8,6 +19,7 @@
   path_helper = require('path');
   require('colors');
   require('js-yaml');
+  js_header = 'Compiled with Extended COco COmpiler\nWhich is a wrapper for native Coco compiler\n\nCoco  repository: https://github.com/satyr/coco/\n                  Hard work of Satoshi Murakami\n\nEcoco repository: https://github.com/jan-swiecki/ecoco\n                  by Jan Święcki\n\nEcoco headers:';
   ref$ = out$;
   ref$.co_include = [];
   ref$.js_include = [];
@@ -16,6 +28,7 @@
   ref$.prepend_before_compile = '';
   ref$.prepend_after_compile = '';
   ref$.path_out = '';
+  ref$.ecoco_json = {};
   ref$.error = function(){
     var this$ = this;
     if (!this.settings.no_beep) {
@@ -78,6 +91,29 @@
       package_json = JSON.parse(package_json);
     }
     return package_json;
+  };
+  ref$.get_ecoco_json = function(path){
+    var dir, _dir, c, k, to$, _path, e, results$ = [];
+    dir = path_helper.dirname(path);
+    dir = dir.replace(/\\/g, '/');
+    _dir = dir.split('/');
+    c = _dir.length;
+    for (k = 0, to$ = c - 1; k <= to$; ++k) {
+      _path = _dir.join('/');
+      _dir.pop();
+      _path += '/ecoco.json';
+      if (fs.existsSync(_path)) {
+        try {
+          this.ecoco_json = require(_path);
+        } catch (e$) {
+          e = e$;
+          this.error("Cannot load " + _path);
+          this.error("Json: " + e);
+        }
+        break;
+      }
+    }
+    return results$;
   };
   ref$.detect_new_line = function(src){
     if (src.indexOf("\r\n") !== -1) {
@@ -169,7 +205,7 @@
     });
   };
   ref$.make = function(path, settings){
-    var m, co_includes, js, js_includes, str_options, cp, proc, err, this$ = this;
+    var js_comment_headers, m, co_includes, js, js_includes, str_options, cp, proc, err, this$ = this;
     if (typeof path === 'object') {
       settings = path;
       path = settings._path;
@@ -186,13 +222,27 @@
       this.error("File " + path + " doesn't exist.");
       return false;
     }
+    this.get_ecoco_json(path);
     this.co = fs.readFileSync(path, 'utf8');
     this.nl = this.detect_new_line(this.co);
     this.path_out = path.replace(/\.(?:co|js\.co)$/, '.js');
+    js_comment_headers = [];
+    js_comment_headers = js_comment_headers.concat(split$.call(js_header, "\n"));
+    this.get_ecoco_json();
+    (function(h){
+      var hh;
+      if (h && h instanceof Array) {
+        hh = h.map(function(it){
+          return '#!' + it;
+        });
+        this.co = join$.call(hh, "\n") + "\n" + this.co;
+      }
+    }.call(this, this.ecoco_json.headers));
     if (m = this.co.match(/^\#!(.*)$/gm)) {
       m.forEach(function(cmd){
         var m;
         cmd = replace$.call(cmd, /^#!/, '');
+        js_comment_headers.push("  " + cmd);
         if (m = cmd.match(/^include=(.*)$/)) {
           this$.include_file(m[1]);
           return true;
@@ -219,6 +269,13 @@
         }
       });
     }
+    (function(i){
+      if (typeof i === 'string') {
+        js_comment_headers = js_comment_headers.concat(['', 'Current project info:'], (split$.call(i, "\n")).map(function(it){
+          return "  " + it;
+        }));
+      }
+    }.call(this, this.ecoco_json.project_info));
     try {
       co_includes = this.get_includes('co');
       this.co = this.prepend_before_compile + co_includes + this.co;
@@ -229,6 +286,12 @@
       js = js_includes + js;
       if (settings.uglify) {
         js = this.coco_make_ugly(js);
+      } else {
+        if (js_comment_headers.length) {
+          this.prepend_after_compile = js_comment_headers.map(function(it){
+            return ("// " + it) + this$.nl;
+          }).join('') + this.nl + this.prepend_after_compile;
+        }
       }
       if (settings.binary) {
         this.make_binary();

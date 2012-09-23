@@ -8,7 +8,18 @@ path_helper   = require 'path'
 require 'colors'
 require 'js-yaml'
 
+js_header = '''
+Compiled with Extended COco COmpiler
+Which is a wrapper for native Coco compiler
 
+Coco  repository: https://github.com/satyr/coco/
+                  Hard work of Satoshi Murakami
+
+Ecoco repository: https://github.com/jan-swiecki/ecoco
+                  by Jan Święcki
+
+Ecoco headers:
+'''
 
 export
 	co_include: []
@@ -18,6 +29,8 @@ export
 	prepend_before_compile: ''
 	prepend_after_compile: ''
 	path_out: ''
+
+	ecoco_json: {}
 
 	error: ->
 		if not @settings.no_beep
@@ -70,6 +83,31 @@ export
 
 		package_json
 
+	# ecoco.json is like .htaccess for apache
+	# you define global options there
+	get_ecoco_json: (path)->
+		dir = path_helper.dirname path
+		dir .= replace /\\/g, '/'
+
+		_dir = dir.split '/'
+		
+		c = _dir.length
+
+		for k from 0 to c - 1
+			_path = _dir .join '/'
+			_dir.pop!
+			_path += '/ecoco.json'
+
+			if fs.existsSync _path
+				try
+					@ecoco_json = require _path
+				catch e
+					@error "Cannot load #{_path}"
+					@error "Json: "+e
+
+				break
+		
+
 	detect_new_line: (src)->
 		if src.indexOf("\r\n") !== -1
 			return "\r\n"
@@ -91,7 +129,6 @@ export
 	replace: (repl)->
 		script = "(x) -> x.replace #repl"
 		script = coco.compile script, {bare:true}
-
 		@co := (eval script)(@co)
 
 	include_file: (path)->
@@ -172,16 +209,36 @@ export
 			@error "File #path doesn't exist."
 			return false
 
+		@get_ecoco_json path
+
 		@co = fs.readFileSync path, \utf8
 		@nl = @detect_new_line @co
 
 		# make path_out
 		@path_out = path.replace /\.(?:co|js\.co)$/, '.js'
 
+		# save #!... into js file as //...
+		# and add js_headers but only
+		# compress (uglify) is not enabled
+		js_comment_headers = []
+		js_comment_headers .= concat js_header/"\n"
+
+		# handle ecoco.json
+		do @get_ecoco_json
+
+		# handle ecoco.json headers
+		let h=@ecoco_json.headers
+			if h and h instanceof Array
+				hh = h.map -> '#!'+it
+				@co = hh*"\n"+"\n"+@co
+
 		# parse shebang #! in file
 		if m=@co.match /^\#!(.*)$/gm
 			(cmd)<~ m.forEach
 			cmd -= /^#!/
+
+			js_comment_headers.push "  #cmd"
+
 			if m=cmd.match /^include=(.*)$/
 				@include_file m[1]
 				return true
@@ -211,6 +268,12 @@ export
 				settings.binary = true
 				return true
 
+		# handle ecoco.json project_info
+		let i=@ecoco_json.project_info
+			if typeof i is 'string'
+				# js_comment_headers .= concat ["\n//"], i/"\n"
+				js_comment_headers .= concat ['','Current project info:'], (i/"\n").map -> "  #it"
+
 		try
 			co_includes = @get_includes \co
 			@co         = @prepend_before_compile+co_includes+@co
@@ -222,6 +285,10 @@ export
 
 			if settings.uglify
 				js = @coco_make_ugly js
+			else
+				if js_comment_headers.length
+					@prepend_after_compile := (js_comment_headers.map ~> "// #it"+@nl).join('')+@nl + @prepend_after_compile
+
 			if settings.binary
 				@make_binary!
 

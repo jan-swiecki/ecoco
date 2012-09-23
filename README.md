@@ -1,4 +1,4 @@
-## Ecoco (Extended COco COmpiler) v0.2.2-beta
+## Ecoco (Extended COco COmpiler) v0.2.3-beta
 
 It is assumed that you are familiar with [coco language](https://github.com/satyr/coco/)!
 
@@ -6,7 +6,7 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 
 ### CLI
 
-	ecoco 0.2.2-1-beta
+	ecoco 0.2.3-3-beta
 	
 	Usage:
 		ecoco [options] file [arguments]
@@ -66,6 +66,30 @@ Adding these at the beggining of your source file will change Ecoco behaviour ac
 * `#!binary` like `ecoco --binary`
 * `#!include=filename` or `#!include=filename.co` like `ecoco --include`
  
+### Ecoco.json
+
+`Ecoco.json` has similar functionality as Apaches' `.htaccess`. You put this file in the same folder as your `.co` script or in one of the parent folders (up to file system root). At the moment in `Ecoco.json` you can define two options: `headers` (array), and `project_info` (string).
+
+Example:
+
+	{
+		"headers":
+		[
+			"replace /^([\t]*)log (.*)$/gm, \"$1log $2, module.filename\"",
+			"bare",
+			"foo"
+		],
+		"project_info": "project info"
+	}
+
+Following lines will be added to script just before compilation:
+
+	#!replace /^([\t]*)log (.*)$/gm, "$1log $2, module.filename"
+	#!bare
+	#!foo
+
+And project info will be added in the `.js` file in top comment section.
+
 ### Examples
 
 	fn = -> "ok!"
@@ -149,3 +173,10 @@ or
 or if you want to build
 
 `git clone https://github.com/jan-swiecki/ecoco && cd ecoco && npm install && coco index.co index.co && npm link`
+
+
+### Changelog
+
+* **0.2.3-beta**
+
+ Added `ecoco.json` support.
