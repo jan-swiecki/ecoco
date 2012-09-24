@@ -9,7 +9,7 @@ argv = easy_cli().argv
 
 # get exec arguments
 exec_argv = []
-if not argv.compile and argv._.length
+if not argv.compile and not argv.ckup and argv._.length
 	raw_argv = process.argv.slice 2
 	cut_after = raw_argv.indexOf(argv._[0])
 	
@@ -20,6 +20,7 @@ coco_make_file = require './coco_make_file'
 
 coco_make_file.make(
 	_path: argv._.pop!
+	ckup: argv.ckup
 	uglify: argv.uglify
 	bare: argv.bare
 	compile: argv.compile

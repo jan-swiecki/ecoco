@@ -1,22 +1,13 @@
-// Compiled with Extended COco COmpiler
-// Which is a wrapper for native Coco compiler
-// 
-// Coco  repository: https://github.com/satyr/coco/
-//                   Hard work of Satoshi Murakami
-// 
-// Ecoco repository: https://github.com/jan-swiecki/ecoco
-//                   by Jan Święcki
-// 
-// Ecoco headers:
-
 (function(){
-  var fs, exec, coco, uglify, uglify_parser, path_helper, js_header, ref$, out$ = typeof exports != 'undefined' && exports || this, replace$ = ''.replace, join$ = [].join, split$ = ''.split;
+  var fs, exec, coco, ckup, uglify, uglify_parser, path_helper, uuid, js_header, ref$, out$ = typeof exports != 'undefined' && exports || this, replace$ = ''.replace, join$ = [].join, split$ = ''.split;
   fs = require("fs");
   exec = require("child_process").exec;
   coco = require('coco');
+  ckup = require('ckup');
   uglify = require('uglify-js').uglify;
   uglify_parser = require('uglify-js').parser;
   path_helper = require('path');
+  uuid = require('node-uuid');
   require('colors');
   require('js-yaml');
   js_header = 'Compiled with Extended COco COmpiler\nWhich is a wrapper for native Coco compiler\n\nCoco  repository: https://github.com/satyr/coco/\n                  Hard work of Satoshi Murakami\n\nEcoco repository: https://github.com/jan-swiecki/ecoco\n                  by Jan Święcki\n\nEcoco headers:';
@@ -124,7 +115,7 @@
       return "\n";
     }
   };
-  ref$.coco_make_ugly = function(code){
+  ref$.uglify = function(code){
     var ast;
     ast = uglify_parser.parse(code);
     ast = uglify.ast_mangle(ast);
@@ -142,6 +133,14 @@
       bare: true
     });
     return this.co = eval(script)(this.co);
+  };
+  ref$.js_replace = function(js, repl){
+    var script;
+    script = "(x) -> x.replace " + repl;
+    script = coco.compile(script, {
+      bare: true
+    });
+    return js = eval(script)(js);
   };
   ref$.include_file = function(path){
     if (path.match(/\.co$/)) {
@@ -204,6 +203,24 @@
       return fs.writeFileSync(write_path, readme);
     });
   };
+  ref$.make_ckup = function(path){
+    var ckup_src, fn_str, out_path;
+    if (!path) {
+      this.error("No ckup path");
+      return false;
+    }
+    if (!fs.existsSync(path)) {
+      this.error("ckup file doesnt exists at " + path);
+      return false;
+    }
+    ckup_src = fs.readFileSync(path, 'utf8');
+    fn_str = 'with(this)' + coco.compile(ckup_src);
+    fn_str = this.uglify(fn_str);
+    fn_str = "//uuid:" + uuid.v1() + "\n" + fn_str;
+    out_path = path.replace(/\.(?:ckup|js\.ckup)$/, '.js');
+    fs.writeFileSync(out_path, fn_str, 'utf8');
+    return this.ok("Ckup saved to " + out_path);
+  };
   ref$.make = function(path, settings){
     var js_comment_headers, m, co_includes, js, js_includes, str_options, cp, proc, err, this$ = this;
     if (typeof path === 'object') {
@@ -213,6 +230,10 @@
     this.settings = settings;
     if (typeof settings['make-readme'] !== 'undefined') {
       this.make_readme(path, settings['make-readme']);
+      return;
+    }
+    if (settings['ckup']) {
+      this.make_ckup(path);
       return;
     }
     if (!path) {
@@ -251,6 +272,10 @@
           this$.replace(m[1]);
           return true;
         }
+        if (m = cmd.match(/^js_replace (.*)$/)) {
+          settings.js_replace = m[1];
+          return true;
+        }
         if (['b', 'bare'].indexOf(cmd) !== -1) {
           settings.bare = true;
           return true;
@@ -282,17 +307,14 @@
       js = coco.compile(this.co, {
         bare: settings.bare
       });
+      if (settings.js_replace != null) {
+        js = this.js_replace(js, settings.js_replace);
+      }
       js_includes = this.get_includes('js');
       js = js_includes + js;
       if (settings.uglify) {
-        js = this.coco_make_ugly(js);
-      } else {
-        if (js_comment_headers.length) {
-          this.prepend_after_compile = js_comment_headers.map(function(it){
-            return ("// " + it) + this$.nl;
-          }).join('') + this.nl + this.prepend_after_compile;
-        }
-      }
+        js = this.uglify(js);
+      } else {}
       if (settings.binary) {
         this.make_binary();
       }

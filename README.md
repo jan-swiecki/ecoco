@@ -1,4 +1,4 @@
-## Ecoco (Extended COco COmpiler) v0.2.3-beta
+## Ecoco (Extended COco COmpiler) v0.2.4-beta
 
 It is assumed that you are familiar with [coco language](https://github.com/satyr/coco/)!
 
@@ -6,7 +6,7 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 
 ### CLI
 
-	ecoco 0.2.3-4-beta
+	ecoco 0.2.4-1-beta
 	
 	Usage:
 		ecoco [options] file [arguments]
@@ -24,6 +24,11 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 	  --help, --usage, -h        Show help
 	
 	  --version                  Show version
+	
+	  --ckup                     Compile ckup file into `.js` file. Output file
+	                             will have `//uuid:X` at the beginning, where X is
+	                             UUID v1. JavaScript in output file will be
+	                             minified.
 	
 	  --compile, -c              Equivalent to `coco -c`
 	
@@ -51,9 +56,10 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 	
 	Examples:
 	
-	  ecoco -cbu awesome.co    compiles to awesome.js with `bare` and `uglify`
-	  ecoco --make-readme      compiles README.md.src into README.md
-	  ecoco binary.co --what   executes binary.co with `--what` argument
+	  ecoco -cbu awesome.co     compiles to awesome.js with `bare` and `uglify`
+	  ecoco --ckup index.ckup   compiles `index.ckup` into `index.js`
+	  ecoco --make-readme       compiles README.md.src into README.md
+	  ecoco binary.co --what    executes binary.co with `--what` argument
 	
 		
 
@@ -177,6 +183,10 @@ or if you want to build
 
 
 ### Changelog
+
+* **0.2.4-beta**
+
+ * Added support for `.ckup` files (See [this](https://github.com/satyr/ckup))
 
 * **0.2.3-beta**
 

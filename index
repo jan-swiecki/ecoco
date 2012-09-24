@@ -3,7 +3,7 @@ var easy_cli, argv, exec_argv, raw_argv, cut_after, coco_make_file;
 easy_cli = require('easy-cli');
 argv = easy_cli().argv;
 exec_argv = [];
-if (!argv.compile && argv._.length) {
+if (!argv.compile && !argv.ckup && argv._.length) {
   raw_argv = process.argv.slice(2);
   cut_after = raw_argv.indexOf(argv._[0]);
   if (cut_after !== -1) {
@@ -13,6 +13,7 @@ if (!argv.compile && argv._.length) {
 coco_make_file = require('./coco_make_file');
 coco_make_file.make({
   _path: argv._.pop(),
+  ckup: argv.ckup,
   uglify: argv.uglify,
   bare: argv.bare,
   compile: argv.compile,

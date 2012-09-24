@@ -1,9 +1,11 @@
 fs            = require "fs"
 exec          = require "child_process" .exec
 coco          = require 'coco'
+ckup          = require 'ckup'
 uglify        = require 'uglify-js' .uglify
 uglify_parser = require 'uglify-js' .parser
 path_helper   = require 'path'
+uuid          = require 'node-uuid'
 
 require 'colors'
 require 'js-yaml'
@@ -116,7 +118,7 @@ export
 		else
 			return "\n"
 
-	coco_make_ugly: (code)->
+	uglify: (code)->
 		ast = uglify_parser.parse code
 		ast = uglify.ast_mangle ast
 		ast = uglify.ast_squeeze ast
@@ -128,8 +130,16 @@ export
 
 	replace: (repl)->
 		script = "(x) -> x.replace #repl"
+
 		script = coco.compile script, {bare:true}
 		@co := (eval script)(@co)
+		# console.error @co
+
+	js_replace: (js,repl)->
+		script = "(x) -> x.replace #repl"
+		script = coco.compile script, {bare:true}
+
+		js := (eval script)(js)
 
 	include_file: (path)->
 		if path.match /\.co$/
@@ -193,6 +203,33 @@ export
 
 		return
 
+	# + compile ckup file as coco file
+	#   and prepend with 'with(this)'
+	#   (as in ckup source: http://satyr.github.com/ckup/docs.htm#ckup)
+	# + add uuid.v1 at the beggining of the file
+	#   //uuid:...
+	# + uglify
+	make_ckup: (path)->
+		if not path
+			@error "No ckup path"
+			return false
+
+		if not fs.existsSync path
+			@error "ckup file doesnt exists at #path"
+			return false
+
+		ckup_src = fs.readFileSync path, \utf8
+
+		fn_str = 'with(this)' + coco.compile ckup_src
+		fn_str = @uglify fn_str
+
+		fn_str = "//uuid:"+uuid.v1()+"\n"+fn_str
+
+		out_path = path.replace /\.(?:ckup|js\.ckup)$/, '.js'
+
+		fs.writeFileSync out_path, fn_str, \utf8
+		@ok "Ckup saved to #out_path"
+
 	make: (path,settings)->
 		if typeof path is 'object' then settings := path; path := settings._path
 
@@ -200,6 +237,10 @@ export
 
 		if typeof settings['make-readme'] !== 'undefined'
 			@make_readme path,settings['make-readme']
+			return
+
+		if settings['ckup']
+			@make_ckup path
 			return
 
 		if not path
@@ -213,6 +254,10 @@ export
 
 		@co = fs.readFileSync path, \utf8
 		@nl = @detect_new_line @co
+
+		# dev stuff, delete this
+		# m = @co.match /^.*req.*$/gm
+		# console.error m
 
 		# make path_out
 		@path_out = path.replace /\.(?:co|js\.co)$/, '.js'
@@ -245,6 +290,10 @@ export
 
 			if m=cmd.match /^replace (.*)$/
 				@replace m[1]
+				return true
+
+			if m=cmd.match /^js_replace (.*)$/
+				settings.js_replace = m[1]
 				return true
 
 			# no (function(){ ... }).call(this); around program
@@ -280,15 +329,16 @@ export
 
 			js          = coco.compile @co, {bare:settings.bare}
 
+			if settings.js_replace?
+				js = @js_replace js, settings.js_replace
+
+
 			js_includes = @get_includes \js
 			js          = js_includes+js
 
 			if settings.uglify
-				js = @coco_make_ugly js
+				js = @uglify js
 			else
-				if js_comment_headers.length
-					@prepend_after_compile := (js_comment_headers.map ~> "// #it"+@nl).join('')+@nl + @prepend_after_compile
-
 			if settings.binary
 				@make_binary!
 
