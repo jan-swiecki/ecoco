@@ -1,9 +1,8 @@
 (function(){
-  var fs, exec, coco, ckup, uglify, uglify_parser, path_helper, uuid, js_header, ref$, out$ = typeof exports != 'undefined' && exports || this, replace$ = ''.replace, join$ = [].join, split$ = ''.split;
+  var fs, exec, coco, uglify, uglify_parser, path_helper, uuid, js_header, ref$, out$ = typeof exports != 'undefined' && exports || this, replace$ = ''.replace, join$ = [].join, split$ = ''.split;
   fs = require("fs");
   exec = require("child_process").exec;
   coco = require('coco');
-  ckup = require('ckup');
   uglify = require('uglify-js').uglify;
   uglify_parser = require('uglify-js').parser;
   path_helper = require('path');

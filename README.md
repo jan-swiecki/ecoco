@@ -6,7 +6,7 @@ It is assumed that you are familiar with [coco language](https://github.com/saty
 
 ### CLI
 
-	ecoco 0.2.4-1-beta
+	ecoco 0.2.4-2-beta
 	
 	Usage:
 		ecoco [options] file [arguments]

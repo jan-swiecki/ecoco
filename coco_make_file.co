@@ -1,7 +1,7 @@
 fs            = require "fs"
 exec          = require "child_process" .exec
 coco          = require 'coco'
-ckup          = require 'ckup'
+# ckup          = require 'ckup'
 uglify        = require 'uglify-js' .uglify
 uglify_parser = require 'uglify-js' .parser
 path_helper   = require 'path'
